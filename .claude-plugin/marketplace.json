@@ -1,0 +1,11 @@
+{
+  "name": "quota-aware-continuation",
+  "owner": { "name": "arminere" },
+  "plugins": [
+    {
+      "name": "quota-aware-continuation",
+      "source": "./",
+      "description": "Checkpoint before the usage limit, resume automatically after the reset."
+    }
+  ]
+}

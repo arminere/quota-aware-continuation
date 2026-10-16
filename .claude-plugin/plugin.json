@@ -1,0 +1,7 @@
+{
+  "name": "quota-aware-continuation",
+  "version": "0.1.0",
+  "description": "Keep long agent tasks running across 5-hour usage windows: checkpoint before the limit, schedule a one-shot resume after the reset, repeat until done.",
+  "license": "MIT",
+  "keywords": ["usage-limit", "checkpoint", "resume", "scheduled-tasks", "long-running"]
+}
