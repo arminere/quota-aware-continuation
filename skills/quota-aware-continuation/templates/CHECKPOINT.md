@@ -3,8 +3,16 @@
 status: in_progress
 updated: <FILL ISO 8601 with offset, e.g. 2026-10-16T23:40:00+08:00>
 threshold: 95
+weekly_threshold: 95
 cycle: 0
 task_slug: <FILL short-kebab-name; the scheduled task id is qac-<slug>>
+resume_after: none
+run_session: none
+lock_minutes: 20
+
+<!-- status: in_progress | paused | hold (user stopped it) | done.
+     resume_after: the gate hook blocks ticks until this time (5-hour or weekly reset).
+     run_session: id of the session currently/last working, to detect a user Stop. -->
 
 ## Goal
 
@@ -39,10 +47,9 @@ task_slug: <FILL short-kebab-name; the scheduled task id is qac-<slug>>
 
 ## Scheduled resume
 
-<!-- Filled when pausing; cleared to "none" when done and the task is deleted. -->
-- platform: none
-- task_id: none
-- fire_at: none
+- platform: <FILL e.g. claude-desktop heartbeat>
+- task_id: <FILL qac-<slug>>
+- schedule: <FILL e.g. */30 * * * *>
 
 ## Pause log
 

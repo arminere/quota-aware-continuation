@@ -1,0 +1,6 @@
+2026-10-17T16:19:38+08:00 | allow | go
+2026-10-17T16:21:53+08:00 | block | another run is active (updated 2 min ago)
+2026-10-17T16:29:34+08:00 | allow | go
+2026-10-17T16:34:34+08:00 | block | held by the user; say 'continue' in a session to resume
+2026-10-17T16:39:34+08:00 | allow | go
+2026-10-17T16:49:34+08:00 | block | task is done

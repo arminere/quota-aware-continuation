@@ -39,6 +39,29 @@ Recurring task `*/5 * 16-16 10 *` created from a user-typed turn in a Bypass ses
 Result: the full loop (pause → later tick resumes → pause again → resume → finish) runs
 unattended, with no scheduler changes needed from inside a run.
 
+## Run 3: gate hook, Stop → hold → continue (`run3-gate/`, logs `evidence/run3-gate-log.md`, `evidence/run3-gate-hook.log`)
+
+Current design. Recurring task `*/5 * * * *` (test interval), gate hook installed,
+`lock_minutes: 3` so a stopped run is noticed quickly. Step 2 sleeps 4 minutes so there
+is time to press Stop during it. 2026-10-17:
+
+| Time | Gate | What happened |
+|---|---|---|
+| 16:11 | | Live session: step 1, paused with `resume_after` 16:19:32, created `qac-demo3` |
+| 16:19:38 | allow | Reset time passed: run recorded its `run_session`, started step 2 |
+| 16:20:54 | | Live session pressed Stop on that run (same as the user's Stop button) |
+| 16:21:53 | block | "another run is active": lock still fresh. The run shows **0 turns**: no model call |
+| 16:29:34 | allow | Lock expired. The run read the previous run's transcript, found `[Request interrupted by user`, set `status: hold` |
+| 16:34:34 | block | "held by the user": 0 turns |
+| 16:35 | | Live session applied the Continue procedure (`status: paused`) |
+| 16:39:34 | allow | Resumed, redid step 2 (4 min), step 3, `result.txt` 3 lines, `status: done` |
+| 16:44 | | No run dispatched while the previous run of the same task was still working |
+| 16:49:34 | block | "task is done": 0 turns |
+
+Not covered by a live run: blocking until a real `resume_after` after hitting 95% (the
+first tick arrived 6 s after the simulated reset time), and a real weekly-limit pause.
+Both use the same gate rule, which the unit tests cover.
+
 ## Reproduce
 
 ```bash
