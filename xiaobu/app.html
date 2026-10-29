@@ -219,10 +219,16 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
       const raw = localStorage.getItem(LS_KEY);
       if (raw) {
         const s = JSON.parse(raw);
-        return { ...emptyState(), ...s, entries: s.entries || {} };
+        return normalize({ ...emptyState(), ...s });
       }
     } catch (e) {}
     return emptyState();
+  }
+  function normalize(s) {
+    if (!Array.isArray(s.values) || !s.values.length) s.values = DEFAULT_VALUES.map(v => ({ ...v }));
+    if (!Array.isArray(s.backlog)) s.backlog = [];
+    if (!s.entries || typeof s.entries !== "object") s.entries = {};
+    return s;
   }
   function saveLocal() {
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
@@ -262,6 +268,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
       if (cfg) {
         state.values = cfg.values || state.values;
         state.backlog = cfg.backlog || state.backlog;
+        normalize(state);
       } else {
         await remote.cfg.set({ values: state.values, backlog: state.backlog });
       }
@@ -467,7 +474,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
         <p class="eyebrow">想做但还没做的事</p>
         <p class="small muted">提前放在这里，低落时就不用再想“做什么”。</p>
         ${state.backlog.length ? state.backlog.map((t, i) => `<div class="valrow"><span style="flex:1;min-width:0">${esc(t)}</span><button class="iconbtn" data-act="delBacklog" data-i="${i}" aria-label="删除">✕</button></div>`).join("") : `<p class="small muted">还没有。</p>`}
-        <div class="valrow"><input type="text" id="backlogInput" placeholder="比如：更新简历、给老朋友发消息"><button class="iconbtn" data-act="addBacklog" aria-label="添加">＋</button></div>
+        <div class="valrow"><input type="text" id="backlogInput" autocomplete="off" placeholder="比如：更新简历、给老朋友发消息"><button class="iconbtn" data-act="addBacklog" aria-label="添加">＋</button></div>
       </section>
       <section class="card">
         <p class="eyebrow">备份</p>
@@ -509,7 +516,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
         <header class="stack"><h2>把那个念头写下来</h2>
           <p class="muted">写出来，它就从脑子里挪到了纸上。可以只写半句。</p></header>
         <label class="field">我在想别人觉得我……
-          <textarea id="thought" placeholder="比如：他们觉得我能力不行">${esc(f.thought)}</textarea></label>
+          <textarea id="thought" autocomplete="off" placeholder="比如：他们觉得我能力不行">${esc(f.thought)}</textarea></label>
         <button class="btn" data-act="next" data-to="check">继续</button>
         <button class="linkbtn" data-act="next" data-to="check">不想写，跳过</button>`;
 
@@ -541,7 +548,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
           <p class="muted">选一条。最近有没有哪一次，哪怕很小，你是按它行动的？</p></header>
         <div class="stack">${state.values.map(v => `<button class="choice" data-value="${esc(v.id)}" aria-pressed="${f.value === v.id}"><strong>${esc(v.name)}</strong><span class="small muted">${esc(v.meaning)}</span></button>`).join("")}</div>
         ${f.value ? `<label class="field">那一次是……（可以不写）
-          <textarea id="valueEvidence" placeholder="比如：上周我主动问了一个不懂的问题">${esc(f.valueEvidence)}</textarea></label>
+          <textarea id="valueEvidence" autocomplete="off" placeholder="比如：上周我主动问了一个不懂的问题">${esc(f.valueEvidence)}</textarea></label>
           <div class="card warm"><p>按「${esc(valueName(f.value))}」这条，现在能做的最小一件事是什么？我们去把它找出来。</p></div>
           <button class="btn" data-act="next" data-to="pick">找一件小事</button>` : ""}
         <button class="linkbtn" data-act="saveOnly">今天就到这，只保存记录</button>`;
@@ -551,8 +558,8 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
           <p class="muted">不用选最重要的，选一件你此刻愿意碰一下的。</p></header>
         ${state.backlog.length ? `<div class="row">${state.backlog.map(t => `<button class="chip" data-task="${esc(t)}" aria-pressed="${f.task === t}">${esc(t)}</button>`).join("")}</div>` : ""}
         <label class="field">这件事是
-          <input type="text" id="task" value="${esc(f.task)}" placeholder="比如：准备下周的面试"></label>
-        ${!f.value ? `<div class="stack"><p class="small muted">它对应你的哪条价值？（可选）</p>
+          <input type="text" id="task" autocomplete="off" enterkeyhint="next" value="${esc(f.task)}" placeholder="比如：准备下周的面试"></label>
+        ${f.path !== "A" ? `<div class="stack"><p class="small muted">它对应你的哪条价值？（可选）</p>
           <div class="row">${state.values.map(v => `<button class="chip" data-value="${esc(v.id)}" aria-pressed="${f.value === v.id}">${esc(v.name)}</button>`).join("")}</div></div>` : ""}
         <button class="btn" data-act="toShrink">继续</button>`;
 
@@ -561,7 +568,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
           <p class="muted">第一步要在 5 分钟内能做完。门槛越低，越容易开始；开始以后，往往就能继续。</p></header>
         ${f.task ? `<p class="quote">${esc(f.task)}</p>` : ""}
         <label class="field">第一步只做
-          <input type="text" id="stepText" value="${esc(f.stepText)}" placeholder="比如：打开文档，只写一个标题"></label>
+          <input type="text" id="stepText" autocomplete="off" enterkeyhint="next" value="${esc(f.stepText)}" placeholder="比如：打开文档，只写一个标题"></label>
         <div class="row">${STEP_HINTS.map(h => `<button class="chip" data-hint="${esc(h)}">${esc(h)}</button>`).join("")}</div>
         <div class="stack"><p class="small muted">给自己多长时间？</p>
           <div class="row">${[2, 5, 10].map(m => `<button class="chip" data-min="${m}" aria-pressed="${f.minutes === m}">${m} 分钟</button>`).join("")}</div></div>
@@ -606,7 +613,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
             : "比开始前低了一点。今天可能就是累了，包容自己，这次尝试照样算数。"}</p></div>` : ""}
           ${f.result === "none" ? `<div class="card warm"><p>没做下去也是信息。下次把第一步再拆小一半试试。</p></div>` : ""}
           <label class="field">这次学到了什么？（可选，一句就够）
-            <input type="text" id="note" value="${esc(f.note)}" placeholder="比如：开始前的害怕比实际做的时候大"></label>
+            <input type="text" id="note" autocomplete="off" enterkeyhint="done" value="${esc(f.note)}" placeholder="比如：开始前的害怕比实际做的时候大"></label>
           <button class="btn" data-act="saveFlow">保存</button>`;
       }
     }
@@ -691,11 +698,11 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
   }
 
   // ---------- events ----------
+  const FLOW_FIELDS = { thought: "thought", valueEvidence: "valueEvidence", task: "task", stepText: "stepText", note: "note" };
   function readInputs() {
     if (!flow) return;
     const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : null; };
-    const map = { thought: "thought", valueEvidence: "valueEvidence", task: "task", stepText: "stepText", note: "note" };
-    for (const [id, key] of Object.entries(map)) { const v = val(id); if (v !== null) flow[key] = v; }
+    for (const [id, key] of Object.entries(FLOW_FIELDS)) { const v = val(id); if (v !== null) flow[key] = v; }
   }
   function buildEntry(f) {
     const { step, history, ...e } = f;
@@ -730,8 +737,9 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
       case "back": back(); break;
       case "toShrink":
         if (!flow.task) { need("#task", "先写下这件事，哪怕几个字"); return; }
-        if (!state.backlog.includes(flow.task)) { state.backlog.unshift(flow.task); state.backlog = state.backlog.slice(0, 20); saveConfig(); }
-        go("shrink"); break;
+        go("shrink");
+        if (!state.backlog.includes(flow.task)) { state.backlog = [flow.task, ...state.backlog].slice(0, 20); saveConfig(); }
+        break;
       case "toTimer":
         if (!flow.stepText) { need("#stepText", "先写下第一步，或者点一个例子"); return; }
         go("timer"); break;
@@ -786,26 +794,41 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
     }
   });
 
+  // flow text is captured as it arrives (typing, IME commit, autofill), not only when a button is tapped
+  function syncFlowField(el) {
+    if (!flow || !FLOW_FIELDS[el.id]) return;
+    flow[FLOW_FIELDS[el.id]] = el.value.trim();
+    if (el.id === "stepText") {
+      const box = document.getElementById("ifthen"), txt = document.getElementById("ifthenStep");
+      if (box) box.hidden = !flow.stepText;
+      if (txt) txt.textContent = flow.stepText;
+    }
+  }
+  ["change", "compositionend", "focusout"].forEach(t => document.addEventListener(t, ev => syncFlowField(ev.target)));
+
   // value edits save after typing pauses
   let editTimer = null;
   document.addEventListener("input", ev => {
     const el = ev.target;
     if (el.dataset.vname !== undefined) state.values[Number(el.dataset.vname)].name = el.value;
     else if (el.dataset.vmeaning !== undefined) state.values[Number(el.dataset.vmeaning)].meaning = el.value;
-    else {
-      // keep the if-then preview in step with typed text
-      if (flow && el.id === "stepText") {
-        flow.stepText = el.value.trim();
-        document.getElementById("ifthen").hidden = !flow.stepText;
-        document.getElementById("ifthenStep").textContent = flow.stepText;
-      }
-      return;
-    }
+    else { syncFlowField(el); return; }
     clearTimeout(editTimer); editTimer = setTimeout(saveConfig, 800);
   });
+  // the keyboard's 下一步 key moves on, same as tapping the button below the field
+  const ENTER_ACTS = { backlogInput: "addBacklog", task: "toShrink", stepText: "toTimer" };
   document.addEventListener("keydown", ev => {
-    if (ev.key === "Enter" && ev.target.id === "backlogInput") document.querySelector('[data-act="addBacklog"]').click();
+    if (ev.key !== "Enter" || ev.isComposing || !ENTER_ACTS[ev.target.id]) return;
+    ev.preventDefault();
+    syncFlowField(ev.target);
+    const btn = document.querySelector(`[data-act="${ENTER_ACTS[ev.target.id]}"]`);
+    if (btn) btn.click();
   });
+
+  // anything unexpected shows up on screen instead of a button that silently does nothing
+  const showError = msg => toast("出了点问题：" + String(msg || "未知错误").slice(0, 80) + "。请截图告诉开发者");
+  window.addEventListener("error", e => showError(e.message));
+  window.addEventListener("unhandledrejection", e => showError(e.reason && (e.reason.message || e.reason.code || e.reason)));
   window.addEventListener("hashchange", () => { if (!flow) { render(); window.scrollTo(0, 0); } });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && timer) tick(); });
 
