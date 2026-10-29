@@ -1,0 +1,778 @@
+<title>小步</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column like a pocket notebook; flows are full-screen step cards, tabs pinned at the bottom */
+:root {
+  --bg: #eef2f1;
+  --surface: #ffffff;
+  --fg: #17211f;
+  --muted: #5d6b68;
+  --line: #d5dedb;
+  --accent: #2c6e5f;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcebe6;
+  --ember: #b5562e;
+  --ember-soft: #f6e2d8;
+  --font-display: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111816; --surface: #1a2421; --fg: #e4ecea; --muted: #94a6a1; --line: #2c3a36;
+    --accent: #6cc0a9; --accent-ink: #0d1614; --accent-soft: #1f3a33;
+    --ember: #e8936b; --ember-soft: #3a2519;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111816; --surface: #1a2421; --fg: #e4ecea; --muted: #94a6a1; --line: #2c3a36;
+  --accent: #6cc0a9; --accent-ink: #0d1614; --accent-soft: #1f3a33;
+  --ember: #e8936b; --ember-soft: #3a2519;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.65;
+  -webkit-tap-highlight-color: transparent;
+}
+* { box-sizing: border-box; }
+main {
+  max-width: 520px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px calc(96px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 20px;
+}
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+.eyebrow { font-size: .78rem; letter-spacing: .08em; color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.quote {
+  border-left: 3px solid var(--accent); padding: 4px 0 4px 14px;
+  font-family: var(--font-display); font-size: 1.08rem;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn {
+  border: 0; border-radius: 12px; padding: 14px 18px; min-height: 52px;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 1rem;
+  width: 100%;
+}
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); font-weight: 500; }
+.btn.ember { background: var(--ember); color: #fff; }
+.btn.big { min-height: 72px; font-size: 1.15rem; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.linkbtn { background: none; border: 0; padding: 6px 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; font-size: .9rem; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 8px 14px; font-size: .95rem; min-height: 40px;
+}
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); font-weight: 700; }
+.choice {
+  text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius);
+  padding: 16px; display: flex; flex-direction: column; gap: 4px; width: 100%;
+}
+.choice strong { font-size: 1.05rem; }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+textarea, input[type="text"] {
+  width: 100%; font: inherit; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; resize: vertical;
+}
+textarea { min-height: 88px; }
+textarea.meaning { min-height: 0; color: var(--muted); }
+label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 500; }
+
+/* mood scale: 1-10 as tappable cells */
+.scale { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.scale button {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 8px;
+  min-height: 44px; font-variant-numeric: tabular-nums; font-weight: 500; padding: 0;
+}
+.scale button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.scale-ends { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
+
+/* flow chrome */
+.flowbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 18px; height: 4px; border-radius: 2px; background: var(--line); display: block; }
+.dots i.on { background: var(--accent); }
+
+/* breathing */
+.breath { display: grid; place-items: center; padding: 12px 0; }
+.breath .orb {
+  width: 132px; height: 132px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--accent-soft), var(--accent));
+  display: grid; place-items: center; color: var(--accent-ink); font-weight: 700;
+  transform: scale(.7); transition: transform 4s ease-in-out;
+}
+.breath .orb.in { transform: scale(1); }
+.breath .orb.out { transform: scale(.7); transition-duration: 6s; }
+
+/* timer */
+.timer { font-variant-numeric: tabular-nums; font-size: 4.2rem; font-weight: 700; text-align: center; letter-spacing: .02em; line-height: 1.1; }
+.ring { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.ring > span { display: block; height: 100%; background: var(--accent); width: 0; transition: width 1s linear; }
+
+.evidence { background: var(--accent-soft); border-color: transparent; }
+.warm { background: var(--ember-soft); border-color: transparent; }
+.entry { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.entry:last-child { border-bottom: 0; }
+.tag { display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--fg); }
+.tag.ember { background: var(--ember-soft); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.valrow { display: flex; gap: 8px; align-items: flex-start; }
+.valrow .stack { flex: 1; min-width: 0; gap: 6px; }
+.iconbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; min-width: 40px; min-height: 40px; }
+
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+nav.tabs .inner { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+nav.tabs a {
+  text-align: center; padding: 12px 0 14px; color: var(--muted); text-decoration: none; font-size: .92rem;
+  border-top: 2px solid transparent; margin-top: -1px;
+}
+nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top-color: var(--accent); }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 6;
+  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: .9rem;
+  max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .breath .orb, .ring > span { transition: none; }
+}
+</style>
+
+<main id="app" aria-live="polite"></main>
+<nav class="tabs" id="tabs" aria-label="主导航">
+  <div class="inner">
+    <a href="#home" data-tab="home">此刻</a>
+    <a href="#review" data-tab="review">回顾</a>
+    <a href="#values" data-tab="values">我的价值</a>
+  </div>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- content ----------
+  const DEFAULT_VALUES = [
+    { id: "learn", name: "持续学习", meaning: "每件事都能教我点什么，没做成的也算。" },
+    { id: "iterate", name: "不断迭代", meaning: "先做出粗糙的第一版，再一点点改。" },
+    { id: "brave", name: "勇敢", meaning: "带着害怕，也迈出一小步。" },
+    { id: "kind", name: "包容自己", meaning: "用对待好朋友的语气对待自己。" },
+  ];
+  const FEELINGS = ["焦躁", "沮丧", "担心", "羞愧", "烦", "空落落", "委屈", "累"];
+  const DISTORTIONS = [
+    { id: "mind", name: "读心术", hint: "我猜他们这么想，但没有确认过。",
+      reply: "你在替别人想。没确认过的猜测，只是你脑子里的一个版本。" },
+    { id: "over", name: "以偏概全", hint: "一次不好，就觉得总是这样。",
+      reply: "一次反应只代表那一次。你过去也有过被认可、做成事的时刻。" },
+    { id: "label", name: "贴标签", hint: "一件事没做好，就认定“我就是个……的人”。",
+      reply: "行为可以改，标签是你自己贴上去的。把“我是失败的人”换成“那件事这次没做好”。" },
+    { id: "magnify", name: "放大", hint: "把一个小反应想成天大的事。",
+      reply: "试着问：一年后我还会记得这件事吗？对方呢？" },
+    { id: "real", name: "确有其事", hint: "对方确实说过或做过。",
+      reply: "就算是真的，它说明的是那一次的行为，或者对方的标准，不是你的全部。有用的部分留下，剩下的还给对方。" },
+  ];
+  const MICRO_ACTIONS = [
+    "穿上鞋，出门走 5 分钟", "喝一杯水，站到窗边", "收拾桌面的一个角落",
+    "洗把脸", "做 10 个深蹲", "给自己写一句不批评的话",
+  ];
+  const STEP_HINTS = ["打开文档，只写一个标题", "给对方发一句话", "列出 3 个要点", "把需要的东西摆到桌上", "读 1 页"];
+
+  // ---------- storage: localStorage always, db (private per-viewer subtree) when the viewer offers it ----------
+  const LS_KEY = "xiaobu.v1";
+  const emptyState = () => ({ values: DEFAULT_VALUES.map(v => ({ ...v })), backlog: [], entries: {} });
+  let state = loadLocal();
+  let remote = null; // { cfg: DocumentReference, col: CollectionReference }
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        return { ...emptyState(), ...s, entries: s.entries || {} };
+      }
+    } catch (e) {}
+    return emptyState();
+  }
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  async function saveConfig() {
+    saveLocal();
+    if (remote) {
+      try { await remote.cfg.set({ values: state.values, backlog: state.backlog }); } catch (e) {}
+    }
+  }
+  async function saveEntry(entry) {
+    state.entries[entry.id] = entry;
+    saveLocal();
+    if (remote) {
+      try { await remote.col.doc(entry.id).set(entry); } catch (e) {}
+    }
+  }
+  async function connectRemote() {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    try {
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      if (!db || !user) return;
+      const uid = await user.id();
+      if (!uid) return;
+      const col = db.collection("data/users/" + uid);
+      remote = { col, cfg: col.doc("config") };
+      const snap = await col.get();
+      const remoteEntries = {};
+      let cfg = null;
+      snap.docs.forEach(d => {
+        if (d.id === "config") cfg = d.data();
+        else remoteEntries[d.id] = d.data();
+      });
+      // entries are append-only, so a union of both sides loses nothing
+      const localOnly = Object.values(state.entries).filter(e => !remoteEntries[e.id]);
+      state.entries = { ...state.entries, ...remoteEntries };
+      if (cfg) {
+        state.values = cfg.values || state.values;
+        state.backlog = cfg.backlog || state.backlog;
+      } else {
+        await remote.cfg.set({ values: state.values, backlog: state.backlog });
+      }
+      for (const e of localOnly) { await remote.col.doc(e.id).set(e); }
+      saveLocal();
+      if (!flow) render();
+    } catch (e) { remote = null; }
+  }
+
+  // ---------- helpers ----------
+  const $app = document.getElementById("app");
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const valueName = id => (state.values.find(v => v.id === id) || {}).name || "";
+  const entriesSorted = () => Object.values(state.entries).sort((a, b) => b.ts - a.ts);
+  const dayStart = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+  const fmtTime = ts => {
+    const d = new Date(ts), today = dayStart(Date.now()), day = dayStart(ts);
+    const hm = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    if (day === today) return "今天 " + hm;
+    if (day === today - 864e5) return "昨天 " + hm;
+    return (d.getMonth() + 1) + "月" + d.getDate() + "日 " + hm;
+  };
+  let toastTimer = null;
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+  function scaleHTML(name, current) {
+    let cells = "";
+    for (let i = 1; i <= 10; i++) cells += `<button type="button" data-scale="${name}" data-v="${i}" aria-pressed="${current === i}">${i}</button>`;
+    return `<div class="scale" role="group" aria-label="1 到 10 分">${cells}</div>
+      <div class="scale-ends"><span>1 很糟</span><span>10 很好</span></div>`;
+  }
+
+  function stats(sinceTs) {
+    const list = Object.values(state.entries).filter(e => e.ts >= sinceTs);
+    const attempts = list.filter(e => e.started);
+    const done = attempts.filter(e => e.result === "done").length;
+    const partial = attempts.filter(e => e.result === "partial").length;
+    const withBoth = attempts.filter(e => e.before && e.after);
+    const delta = withBoth.length ? withBoth.reduce((s, e) => s + (e.after - e.before), 0) / withBoth.length : null;
+    return { list, attempts: attempts.length, done, partial, delta, measured: withBoth.length };
+  }
+  const fmtDelta = d => (d > 0 ? "+" : "") + d.toFixed(1);
+
+  // ---------- flow state ----------
+  // flow = null when on a tab; otherwise { step, path, ...draft entry }
+  let flow = null;
+  let timer = null; // { total, left, handle, wake }
+
+  function startFlow(kind) {
+    flow = {
+      id: "e-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      ts: Date.now(), step: kind === "direct" ? "pick" : "settle", path: kind === "direct" ? "B" : null,
+      before: null, feelings: [], thought: "", distortions: [], value: null, valueEvidence: "",
+      task: "", stepText: "", minutes: 5, started: false, result: null, after: null, note: "",
+    };
+    render();
+    window.scrollTo(0, 0);
+  }
+  function go(step) { flow.step = step; render(); window.scrollTo(0, 0); }
+  function exitFlow() { stopTimer(); flow = null; render(); }
+
+  const FLOW_ORDER = {
+    A: ["settle", "route", "thought", "check", "separate", "values", "pick", "shrink", "timer", "after"],
+    B: ["settle", "route", "pick", "shrink", "timer", "after"],
+    C: ["settle", "route", "micro", "timer", "after"],
+  };
+  function dots() {
+    const order = FLOW_ORDER[flow.path || "B"];
+    const i = Math.max(0, order.indexOf(flow.step));
+    return `<div class="dots" aria-hidden="true">${order.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>`;
+  }
+  function flowbar() {
+    return `<div class="flowbar">${dots()}<button class="linkbtn" data-act="exit">先离开</button></div>`;
+  }
+
+  // ---------- views ----------
+  function viewHome() {
+    const week = stats(Date.now() - 7 * 864e5);
+    const all = stats(0);
+    const today = stats(dayStart(Date.now()));
+    const hour = new Date().getHours();
+    let evidence;
+    if (all.attempts === 0) {
+      evidence = `<div class="card evidence"><p>这里会积累<strong>你自己的证据</strong>：每做一次小动作，就记下前后的感受。几次之后，你会看到“做了之后会好一点”是不是对你成立。</p></div>`;
+    } else {
+      evidence = `<div class="card evidence">
+        <p class="eyebrow">最近 7 天</p>
+        <p>你尝试了 <span class="num">${week.attempts}</span> 次，做完 <span class="num">${week.done}</span> 次，做了一部分 <span class="num">${week.partial}</span> 次。</p>
+        ${all.delta !== null ? `<p>到目前为止，做完小动作后，情绪平均变化 <span class="num">${fmtDelta(all.delta)}</span> 分（共 ${all.measured} 次记录）。</p>` : ""}
+        <p class="small muted">做成几件不重要，尝试的次数才是你在长大的样子。</p>
+      </div>`;
+    }
+    const nudge = hour >= 20 && today.attempts === 0
+      ? `<div class="card warm"><p>今天还没有记录。睡前花 5 分钟做一件很小的事，或者只是来打个分，也算。</p></div>` : "";
+    return `
+      <header class="stack">
+        <p class="eyebrow">小步</p>
+        <h1>焦虑可以在。<br>我们先做一小步。</h1>
+      </header>
+      <div class="stack">
+        <button class="btn big" data-act="start">我现在不太好</button>
+        <button class="btn ghost" data-act="direct">我状态还行，想推进一件事</button>
+      </div>
+      ${nudge}
+      ${evidence}
+      ${recentHTML(3)}
+    `;
+  }
+
+  function recentHTML(n) {
+    const list = entriesSorted().slice(0, n);
+    if (!list.length) return "";
+    return `<section class="card"><p class="eyebrow">最近的记录</p>${list.map(entryHTML).join("")}</section>`;
+  }
+  function entryHTML(e) {
+    const resultTag = e.result === "done" ? `<span class="tag">做完了</span>`
+      : e.result === "partial" ? `<span class="tag">做了一部分</span>`
+      : e.started ? `<span class="tag ember">开始过</span>` : `<span class="tag ember">只记录了</span>`;
+    const mood = e.before && e.after ? ` · 情绪 ${e.before} → ${e.after}` : e.before ? ` · 情绪 ${e.before}` : "";
+    const title = e.stepText || e.task || e.thought || "（没有写内容）";
+    return `<div class="entry">
+      <span class="small muted">${fmtTime(e.ts)}${mood}</span>
+      <span>${esc(title)}</span>
+      <span class="row">${resultTag}${e.value ? `<span class="tag">${esc(valueName(e.value))}</span>` : ""}</span>
+      ${e.note ? `<span class="small muted">学到：${esc(e.note)}</span>` : ""}
+    </div>`;
+  }
+
+  function viewReview() {
+    const all = stats(0), week = stats(Date.now() - 7 * 864e5);
+    const entries = entriesSorted();
+    if (!entries.length) {
+      return `<header class="stack"><p class="eyebrow">回顾</p><h1>还没有记录</h1></header>
+        <div class="card"><p>做完第一次小动作后，这里会显示你尝试了多少次、做之前和做之后的情绪变化，以及你在按哪条价值行动。</p></div>
+        <button class="btn" data-act="direct">现在做第一次</button>`;
+    }
+    // what pulls you down: path A vs others, and the most frequent feelings
+    const feelCount = {};
+    entries.forEach(e => (e.feelings || []).forEach(f => { feelCount[f] = (feelCount[f] || 0) + 1; }));
+    const topFeel = Object.entries(feelCount).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const pathA = entries.filter(e => e.path === "A").length;
+    const distCount = {};
+    entries.forEach(e => (e.distortions || []).forEach(d => { distCount[d] = (distCount[d] || 0) + 1; }));
+    const topDist = Object.entries(distCount).sort((a, b) => b[1] - a[1])[0];
+    const hourBuckets = { "早上": 0, "下午": 0, "晚上": 0, "深夜": 0 };
+    entries.forEach(e => { const h = new Date(e.ts).getHours(); hourBuckets[h < 12 && h >= 5 ? "早上" : h < 18 && h >= 12 ? "下午" : h < 23 && h >= 18 ? "晚上" : "深夜"]++; });
+    const topHour = Object.entries(hourBuckets).sort((a, b) => b[1] - a[1])[0];
+
+    const ledger = state.values.map(v => {
+      const items = entries.filter(e => e.value === v.id && (e.started || e.valueEvidence));
+      return `<div class="entry"><span><strong>${esc(v.name)}</strong> <span class="num">${items.length}</span> 次</span>
+        ${items.slice(0, 3).map(e => `<span class="small muted">${fmtTime(e.ts)} · ${esc(e.valueEvidence || e.stepText || e.task)}</span>`).join("")}</div>`;
+    }).join("");
+
+    return `
+      <header class="stack"><p class="eyebrow">回顾</p><h1>你的证据</h1></header>
+      <section class="card evidence">
+        <p>一共尝试了 <span class="num">${all.attempts}</span> 次，其中做完 <span class="num">${all.done}</span> 次，做了一部分 <span class="num">${all.partial}</span> 次。最近 7 天尝试 <span class="num">${week.attempts}</span> 次。</p>
+        ${all.delta !== null ? `<p>做之前和做之后都打了分的 ${all.measured} 次里，情绪平均变化 <span class="num">${fmtDelta(all.delta)}</span> 分。${all.delta > 0 ? "对你来说，“做了之后会好一点”是有数据支撑的。" : "数据还不多，继续记录，看看它对你是否成立。"}</p>` : ""}
+      </section>
+      <section class="card">
+        <p class="eyebrow">价值行动账本</p>
+        <p class="small muted">你按自己的标准行动过的次数。这比别人的一句评价更能说明你是谁。</p>
+        ${ledger}
+      </section>
+      <section class="card">
+        <p class="eyebrow">什么时候容易低落</p>
+        ${topFeel.length ? `<p>最常出现的感受：${topFeel.map(([f, c]) => `${esc(f)}（${c}）`).join("、")}。</p>` : ""}
+        <p>${entries.length} 次记录里，有 ${pathA} 次是在想别人怎么看你。${topDist ? `最常见的想法陷阱是「${esc((DISTORTIONS.find(d => d.id === topDist[0]) || {}).name)}」。` : ""}</p>
+        <p>记录最多的时段是<strong>${topHour[0]}</strong>，可以提前给那个时段准备一件小事。</p>
+      </section>
+      <section class="card"><p class="eyebrow">全部记录</p>${entries.slice(0, 50).map(entryHTML).join("")}</section>
+    `;
+  }
+
+  function viewValues() {
+    return `
+      <header class="stack"><p class="eyebrow">我的价值</p><h1>用我自己的标准评价我</h1>
+        <p class="muted">别人怎么看你，说的是对方的视角。这几条是你自己选的标准。低落时，“小步”会把你带回到这里。</p></header>
+      <section class="stack" id="valueList">
+        ${state.values.map((v, i) => `
+          <div class="card"><div class="valrow"><div class="stack">
+            <input type="text" id="vname-${esc(v.id)}" data-vname="${i}" value="${esc(v.name)}" aria-label="价值名称">
+            <textarea class="meaning" id="vmeaning-${esc(v.id)}" data-vmeaning="${i}" rows="2" aria-label="这条价值对我意味着什么">${esc(v.meaning)}</textarea>
+          </div><button class="iconbtn" data-act="delValue" data-i="${i}" aria-label="删除这条价值">✕</button></div></div>`).join("")}
+        <button class="btn ghost" data-act="addValue">添加一条价值</button>
+      </section>
+      <section class="card">
+        <p class="eyebrow">想做但还没做的事</p>
+        <p class="small muted">提前放在这里，低落时就不用再想“做什么”。</p>
+        ${state.backlog.length ? state.backlog.map((t, i) => `<div class="valrow"><span style="flex:1;min-width:0">${esc(t)}</span><button class="iconbtn" data-act="delBacklog" data-i="${i}" aria-label="删除">✕</button></div>`).join("") : `<p class="small muted">还没有。</p>`}
+        <div class="valrow"><input type="text" id="backlogInput" placeholder="比如：更新简历、给老朋友发消息"><button class="iconbtn" data-act="addBacklog" aria-label="添加">＋</button></div>
+      </section>
+      <section class="card">
+        <p class="eyebrow">备份</p>
+        <p class="small muted">${remote ? "记录已保存在你的账号里，换设备打开同一个链接也能看到。" : "记录保存在这台手机的浏览器里。清除浏览器数据前，先复制一份备份。"}</p>
+        <div class="row">
+          <button class="btn ghost" data-act="exportCopy" style="flex:1">复制备份</button>
+          <button class="btn ghost" data-act="importShow" style="flex:1">从备份恢复</button>
+        </div>
+        <div id="importBox" class="stack" hidden>
+          <textarea id="importText" placeholder="把之前复制的备份粘贴到这里"></textarea>
+          <button class="btn" data-act="importDo">恢复（会和现有记录合并）</button>
+        </div>
+      </section>
+    `;
+  }
+
+  // ---------- flow views ----------
+  function viewFlow() {
+    const f = flow;
+    switch (f.step) {
+      case "settle": return `${flowbar()}
+        <header class="stack"><h2>先停 30 秒</h2>
+          <p class="muted">不用马上解决任何事。跟着圆圈呼吸三轮：吸气 4 秒，呼气 6 秒。</p></header>
+        <div class="breath"><div class="orb" id="orb">准备</div></div>
+        <div class="stack"><p><strong>现在的感受是？</strong><span class="small muted"> 可多选。给情绪起个名字，它的强度就会降一点。</span></p>
+          <div class="row">${FEELINGS.map(x => `<button class="chip" data-feel="${esc(x)}" aria-pressed="${f.feelings.includes(x)}">${esc(x)}</button>`).join("")}</div></div>
+        <div class="stack"><p><strong>此刻的状态打几分？</strong></p>${scaleHTML("before", f.before)}</div>
+        <button class="btn" data-act="next" data-to="route" ${f.before ? "" : "disabled"}>继续</button>`;
+
+      case "route": return `${flowbar()}
+        <header class="stack"><h2>你现在更接近哪种？</h2></header>
+        <div class="stack">
+          <button class="choice" data-route="A"><strong>在想别人怎么看我</strong><span class="small muted">过去被看低的事、别人的反应、担心自己不够好</span></button>
+          <button class="choice" data-route="B"><strong>想做一件事，但不敢开始或一直拖着</strong><span class="small muted">知道该做什么，就是迈不出第一步</span></button>
+          <button class="choice" data-route="C"><strong>说不清，就是烦</strong><span class="small muted">先让身体动一下，情绪会跟上来</span></button>
+        </div>`;
+
+      case "thought": return `${flowbar()}
+        <header class="stack"><h2>把那个念头写下来</h2>
+          <p class="muted">写出来，它就从脑子里挪到了纸上。可以只写半句。</p></header>
+        <label class="field">我在想别人觉得我……
+          <textarea id="thought" placeholder="比如：他们觉得我能力不行">${esc(f.thought)}</textarea></label>
+        <button class="btn" data-act="next" data-to="check">继续</button>
+        <button class="linkbtn" data-act="next" data-to="check">不想写，跳过</button>`;
+
+      case "check": {
+        const picked = DISTORTIONS.filter(d => f.distortions.includes(d.id));
+        return `${flowbar()}
+        <header class="stack"><h2>这是事实，还是解读？</h2>
+          <p class="muted">勾选符合的。大多数让人难受的念头，都掺着几分解读。</p></header>
+        ${f.thought ? `<p class="quote">${esc(f.thought)}</p>` : ""}
+        <div class="stack">${DISTORTIONS.map(d => `<button class="choice" data-dist="${d.id}" aria-pressed="${f.distortions.includes(d.id)}"><strong>${d.name}</strong><span class="small muted">${d.hint}</span></button>`).join("")}</div>
+        ${picked.length ? `<div class="card evidence">${picked.map(d => `<p><strong>${d.name}：</strong>${d.reply}</p>`).join("")}</div>` : ""}
+        <button class="btn" data-act="next" data-to="separate">继续</button>`;
+      }
+
+      case "separate": return `${flowbar()}
+        <header class="stack"><h2>把“别人的看法”和“我是谁”分开</h2></header>
+        <div class="card">
+          <p class="quote">别人的看法 = 对方的视角 + 那一刻的你。<br>它是一条信息，不是一份判决。</p>
+          <p>你会难受，是因为你把自我评价交给了别人的反应。别人的反应会变，你的价值不应该跟着变。</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">聚光灯效应</p>
+          <p>心理学实验发现，人们普遍高估了别人对自己的注意。你反复想的那件事，对方多半早就没在想了。</p>
+        </div>
+        <button class="btn" data-act="next" data-to="values">回到我自己的标准</button>`;
+
+      case "values": return `${flowbar()}
+        <header class="stack"><h2>按你自己的标准看看</h2>
+          <p class="muted">选一条。最近有没有哪一次，哪怕很小，你是按它行动的？</p></header>
+        <div class="stack">${state.values.map(v => `<button class="choice" data-value="${esc(v.id)}" aria-pressed="${f.value === v.id}"><strong>${esc(v.name)}</strong><span class="small muted">${esc(v.meaning)}</span></button>`).join("")}</div>
+        ${f.value ? `<label class="field">那一次是……（可以不写）
+          <textarea id="valueEvidence" placeholder="比如：上周我主动问了一个不懂的问题">${esc(f.valueEvidence)}</textarea></label>
+          <div class="card warm"><p>按「${esc(valueName(f.value))}」这条，现在能做的最小一件事是什么？我们去把它找出来。</p></div>
+          <button class="btn" data-act="next" data-to="pick">找一件小事</button>` : ""}
+        <button class="linkbtn" data-act="saveOnly">今天就到这，只保存记录</button>`;
+
+      case "pick": return `${flowbar()}
+        <header class="stack"><h2>选一件事</h2>
+          <p class="muted">不用选最重要的，选一件你此刻愿意碰一下的。</p></header>
+        ${state.backlog.length ? `<div class="row">${state.backlog.map(t => `<button class="chip" data-task="${esc(t)}" aria-pressed="${f.task === t}">${esc(t)}</button>`).join("")}</div>` : ""}
+        <label class="field">这件事是
+          <input type="text" id="task" value="${esc(f.task)}" placeholder="比如：准备下周的面试"></label>
+        ${!f.value ? `<div class="stack"><p class="small muted">它对应你的哪条价值？（可选）</p>
+          <div class="row">${state.values.map(v => `<button class="chip" data-value="${esc(v.id)}" aria-pressed="${f.value === v.id}">${esc(v.name)}</button>`).join("")}</div></div>` : ""}
+        <button class="btn" data-act="toShrink">继续</button>`;
+
+      case "shrink": return `${flowbar()}
+        <header class="stack"><h2>拆到小得有点可笑</h2>
+          <p class="muted">第一步要在 5 分钟内能做完。门槛越低，越容易开始；开始以后，往往就能继续。</p></header>
+        ${f.task ? `<p class="quote">${esc(f.task)}</p>` : ""}
+        <label class="field">第一步只做
+          <input type="text" id="stepText" value="${esc(f.stepText)}" placeholder="比如：打开文档，只写一个标题"></label>
+        <div class="row">${STEP_HINTS.map(h => `<button class="chip" data-hint="${esc(h)}">${esc(h)}</button>`).join("")}</div>
+        <div class="stack"><p class="small muted">给自己多长时间？</p>
+          <div class="row">${[2, 5, 10].map(m => `<button class="chip" data-min="${m}" aria-pressed="${f.minutes === m}">${m} 分钟</button>`).join("")}</div></div>
+        <div class="card evidence" id="ifthen" ${f.stepText ? "" : "hidden"}><p class="eyebrow">如果-那么计划</p><p>如果计时开始，我就先<span id="ifthenStep">${esc(f.stepText)}</span>。做到时间就可以停，继续做算额外收获。</p></div>
+        <button class="btn" data-act="toTimer" ${f.stepText ? "" : "disabled"}>就做这一步</button>`;
+
+      case "micro": return `${flowbar()}
+        <header class="stack"><h2>先让身体动一下</h2>
+          <p class="muted">说不清的烦，常常不是靠想清楚解决的。先动起来，情绪会跟上来。</p></header>
+        <div class="stack">${MICRO_ACTIONS.map(a => `<button class="choice" data-micro="${esc(a)}"><strong>${esc(a)}</strong></button>`).join("")}</div>`;
+
+      case "timer": {
+        const t = timer;
+        const left = t ? t.left : f.minutes * 60;
+        const pct = t ? 100 * (1 - t.left / t.total) : 0;
+        const mm = String(Math.floor(left / 60)).padStart(2, "0"), ss = String(left % 60).padStart(2, "0");
+        return `${flowbar()}
+          <header class="stack"><p class="eyebrow">现在只做这一件</p><h2>${esc(f.stepText)}</h2></header>
+          <div class="timer" id="clock" role="timer">${mm}:${ss}</div>
+          <div class="ring"><span id="bar" style="width:${pct}%"></span></div>
+          ${t ? `<p class="muted small" style="text-align:center">${t.left === 0 ? "时间到。做到这里就很好。" : "焦虑可以在，带着它继续做就行。"}</p>
+            <button class="btn" data-act="finish">${t.left === 0 ? "回来记录" : "做完了 / 先停下"}</button>`
+            : `<button class="btn ember" data-act="startTimer">开始</button>
+               <button class="linkbtn" data-act="back" data-to="${f.path === "C" ? "micro" : "shrink"}">换一个</button>`}`;
+      }
+
+      case "after": {
+        const delta = f.before && f.after ? f.after - f.before : null;
+        const count = stats(0).attempts + 1;
+        return `
+          <header class="stack"><p class="eyebrow">第 ${count} 次尝试</p><h2>你开始了，这就是重点</h2></header>
+          <div class="stack"><p><strong>刚才那一步</strong></p>
+            <div class="row">
+              <button class="chip" data-result="done" aria-pressed="${f.result === "done"}">做完了</button>
+              <button class="chip" data-result="partial" aria-pressed="${f.result === "partial"}">做了一部分</button>
+              <button class="chip" data-result="none" aria-pressed="${f.result === "none"}">没做下去</button>
+            </div></div>
+          <div class="stack"><p><strong>现在的状态打几分？</strong><span class="small muted"> 开始前是 ${f.before} 分</span></p>${scaleHTML("after", f.after)}</div>
+          ${delta !== null ? `<div class="card ${delta > 0 ? "evidence" : "warm"}"><p>${
+            delta > 0 ? `比开始前高了 ${delta} 分。记住这个感觉：转机在做之后。`
+            : delta === 0 ? "分数没变，也没关系。你还是从“想”走到了“做”。"
+            : "比开始前低了一点。今天可能就是累了，包容自己，这次尝试照样算数。"}</p></div>` : ""}
+          ${f.result === "none" ? `<div class="card warm"><p>没做下去也是信息。下次把第一步再拆小一半试试。</p></div>` : ""}
+          <label class="field">这次学到了什么？（可选，一句就够）
+            <input type="text" id="note" value="${esc(f.note)}" placeholder="比如：开始前的害怕比实际做的时候大"></label>
+          <button class="btn" data-act="saveFlow" ${f.result && f.after ? "" : "disabled"}>保存</button>`;
+      }
+    }
+    return "";
+  }
+
+  // ---------- render ----------
+  function currentTab() {
+    const h = (location.hash || "").replace("#", "");
+    return ["home", "review", "values"].includes(h) ? h : "home";
+  }
+  function render() {
+    const tab = currentTab();
+    document.getElementById("tabs").hidden = !!flow;
+    document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", !flow && a.dataset.tab === tab ? "page" : "false"));
+    $app.innerHTML = flow ? viewFlow() : tab === "review" ? viewReview() : tab === "values" ? viewValues() : viewHome();
+    if (flow && flow.step === "settle") runBreath();
+  }
+
+  let breathRun = 0;
+  function runBreath() {
+    const run = ++breathRun;
+    const orb = document.getElementById("orb");
+    if (!orb) return;
+    let cycle = 0;
+    const step = () => {
+      const o = document.getElementById("orb");
+      if (run !== breathRun || !o) return;
+      if (cycle >= 3) { o.className = "orb"; o.textContent = "好了"; return; }
+      o.className = "orb in"; o.textContent = "吸气";
+      setTimeout(() => {
+        const o2 = document.getElementById("orb");
+        if (run !== breathRun || !o2) return;
+        o2.className = "orb out"; o2.textContent = "呼气";
+        cycle++;
+        setTimeout(step, 6000);
+      }, 4000);
+    };
+    setTimeout(step, 600);
+  }
+
+  // ---------- timer ----------
+  async function startTimer() {
+    flow.started = true;
+    const total = flow.minutes * 60;
+    timer = { total, left: total, endAt: Date.now() + total * 1000, handle: null, wake: null };
+    try { if (navigator.wakeLock) timer.wake = await navigator.wakeLock.request("screen"); } catch (e) {}
+    timer.handle = setInterval(tick, 1000);
+    render();
+  }
+  function tick() {
+    if (!timer) return;
+    timer.left = Math.max(0, Math.round((timer.endAt - Date.now()) / 1000));
+    const clock = document.getElementById("clock"), bar = document.getElementById("bar");
+    if (clock) clock.textContent = String(Math.floor(timer.left / 60)).padStart(2, "0") + ":" + String(timer.left % 60).padStart(2, "0");
+    if (bar) bar.style.width = (100 * (1 - timer.left / timer.total)) + "%";
+    if (timer.left === 0) {
+      clearInterval(timer.handle);
+      try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
+      render();
+    }
+  }
+  function stopTimer() {
+    if (!timer) return;
+    clearInterval(timer.handle);
+    try { timer.wake && timer.wake.release(); } catch (e) {}
+    timer = null;
+  }
+
+  // ---------- events ----------
+  function readInputs() {
+    if (!flow) return;
+    const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : null; };
+    const map = { thought: "thought", valueEvidence: "valueEvidence", task: "task", stepText: "stepText", note: "note" };
+    for (const [id, key] of Object.entries(map)) { const v = val(id); if (v !== null) flow[key] = v; }
+  }
+  function buildEntry(f) {
+    const { step, ...e } = f;
+    return e;
+  }
+
+  document.addEventListener("click", async ev => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    readInputs();
+    const d = b.dataset;
+
+    if (d.scale) { flow[d.scale] = Number(d.v); render(); return; }
+    if (d.feel) { const i = flow.feelings.indexOf(d.feel); i >= 0 ? flow.feelings.splice(i, 1) : flow.feelings.push(d.feel); b.setAttribute("aria-pressed", i < 0); return; }
+    if (d.route) { flow.path = d.route; go(d.route === "A" ? "thought" : d.route === "B" ? "pick" : "micro"); return; }
+    if (d.dist) { const i = flow.distortions.indexOf(d.dist); i >= 0 ? flow.distortions.splice(i, 1) : flow.distortions.push(d.dist); render(); return; }
+    if (d.value) { flow.value = flow.value === d.value ? null : d.value; render(); return; }
+    if (d.task) { flow.task = d.task; render(); return; }
+    if (d.hint) { flow.stepText = d.hint; render(); return; }
+    if (d.min) { flow.minutes = Number(d.min); render(); return; }
+    if (d.micro) { flow.stepText = d.micro; flow.minutes = 5; go("timer"); return; }
+    if (d.result) { flow.result = d.result; render(); return; }
+
+    switch (d.act) {
+      case "start": startFlow("feel"); break;
+      case "direct": startFlow("direct"); break;
+      case "exit": exitFlow(); break;
+      case "next": go(d.to); break;
+      case "back": stopTimer(); go(d.to); break;
+      case "toShrink":
+        if (!flow.task) { toast("先写下这件事，哪怕几个字"); return; }
+        if (!state.backlog.includes(flow.task)) { state.backlog.unshift(flow.task); state.backlog = state.backlog.slice(0, 20); saveConfig(); }
+        go("shrink"); break;
+      case "toTimer": if (flow.stepText) go("timer"); break;
+      case "startTimer": startTimer(); break;
+      case "finish": stopTimer(); go("after"); break;
+      case "saveOnly":
+        await saveEntry(buildEntry(flow)); flow = null; location.hash = "#home"; render(); toast("已保存"); break;
+      case "saveFlow": {
+        const f = flow;
+        await saveEntry(buildEntry(f));
+        // a finished task leaves the backlog
+        if (f.result === "done" && f.task && state.backlog.includes(f.task)) { state.backlog = state.backlog.filter(t => t !== f.task); saveConfig(); }
+        flow = null; location.hash = "#home"; render(); toast("已记下这一次尝试"); break;
+      }
+      case "addValue":
+        state.values.push({ id: "v" + Date.now().toString(36), name: "新的价值", meaning: "它对我意味着……" }); saveConfig(); render(); break;
+      case "delValue":
+        if (state.values.length <= 1) { toast("至少保留一条"); return; }
+        state.values.splice(Number(d.i), 1); saveConfig(); render(); break;
+      case "addBacklog": {
+        const el = document.getElementById("backlogInput"); const t = el && el.value.trim();
+        if (!t) return; state.backlog.unshift(t); saveConfig(); render(); break;
+      }
+      case "delBacklog": state.backlog.splice(Number(d.i), 1); saveConfig(); render(); break;
+      case "exportCopy": {
+        const text = JSON.stringify(state);
+        try { await navigator.clipboard.writeText(text); toast("备份已复制，粘贴到备忘录里保存"); }
+        catch (e) {
+          document.getElementById("importBox").hidden = false;
+          const ta = document.getElementById("importText"); ta.value = text; ta.select();
+          toast("请手动复制下方文本");
+        }
+        break;
+      }
+      case "importShow": document.getElementById("importBox").hidden = false; break;
+      case "importDo": {
+        try {
+          const s = JSON.parse(document.getElementById("importText").value);
+          if (!s || typeof s !== "object" || !s.entries) throw new Error("bad");
+          state.values = s.values || state.values;
+          state.backlog = s.backlog || state.backlog;
+          const incoming = Object.values(s.entries);
+          state.entries = { ...s.entries, ...state.entries };
+          await saveConfig();
+          if (remote) for (const e of incoming) { try { await remote.col.doc(e.id).set(e); } catch (er) {} }
+          saveLocal(); render(); toast("已恢复 " + incoming.length + " 条记录");
+        } catch (e) { toast("这段文本不是有效的备份，请重新复制"); }
+        break;
+      }
+    }
+  });
+
+  // value edits save after typing pauses
+  let editTimer = null;
+  document.addEventListener("input", ev => {
+    const el = ev.target;
+    if (el.dataset.vname !== undefined) state.values[Number(el.dataset.vname)].name = el.value;
+    else if (el.dataset.vmeaning !== undefined) state.values[Number(el.dataset.vmeaning)].meaning = el.value;
+    else {
+      // keep the continue buttons in step with typed text
+      if (flow && el.id === "stepText") {
+        flow.stepText = el.value.trim();
+        const btn = document.querySelector('[data-act="toTimer"]'); if (btn) btn.disabled = !flow.stepText;
+        document.getElementById("ifthen").hidden = !flow.stepText;
+        document.getElementById("ifthenStep").textContent = flow.stepText;
+      }
+      return;
+    }
+    clearTimeout(editTimer); editTimer = setTimeout(saveConfig, 800);
+  });
+  document.addEventListener("keydown", ev => {
+    if (ev.key === "Enter" && ev.target.id === "backlogInput") document.querySelector('[data-act="addBacklog"]').click();
+  });
+  window.addEventListener("hashchange", () => { if (!flow) { render(); window.scrollTo(0, 0); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && timer) tick(); });
+
+  render();
+  connectRemote();
+})();
+</script>
