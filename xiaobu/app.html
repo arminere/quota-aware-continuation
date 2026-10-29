@@ -76,6 +76,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .btn.ember { background: var(--ember); color: #fff; }
 .btn.big { min-height: 72px; font-size: 1.15rem; }
 .btn[disabled] { opacity: .45; cursor: default; }
+.need { animation: need 1.2s ease-out; border-radius: 10px; }
+@keyframes need { 0%, 40% { box-shadow: 0 0 0 3px var(--ember); } 100% { box-shadow: 0 0 0 3px transparent; } }
 .linkbtn { background: none; border: 0; padding: 6px 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; font-size: .9rem; }
 .chip {
   border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
@@ -162,6 +164,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
 }
 @media (prefers-reduced-motion: reduce) {
   .breath .orb, .ring > span { transition: none; }
+  .need { animation: none; outline: 3px solid var(--ember); }
 }
 </style>
 
@@ -488,11 +491,11 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
       case "settle": return `${flowbar()}
         <header class="stack"><h2>先停 30 秒</h2>
           <p class="muted">不用马上解决任何事。跟着圆圈呼吸三轮：吸气 4 秒，呼气 6 秒。</p></header>
-        <div class="breath"><div class="orb" id="orb">准备</div></div>
+        <div class="breath"><div class="${breath.cls}" id="orb">${breath.text}</div></div>
         <div class="stack"><p><strong>现在的感受是？</strong><span class="small muted"> 可多选。给情绪起个名字，它的强度就会降一点。</span></p>
           <div class="row">${FEELINGS.map(x => `<button class="chip" data-feel="${esc(x)}" aria-pressed="${f.feelings.includes(x)}">${esc(x)}</button>`).join("")}</div></div>
         <div class="stack"><p><strong>此刻的状态打几分？</strong></p>${scaleHTML("before", f.before)}</div>
-        <button class="btn" data-act="next" data-to="route" ${f.before ? "" : "disabled"}>继续</button>`;
+        <button class="btn" data-act="toRoute">继续</button>`;
 
       case "route": return `${flowbar()}
         <header class="stack"><h2>你现在更接近哪种？</h2></header>
@@ -563,7 +566,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
         <div class="stack"><p class="small muted">给自己多长时间？</p>
           <div class="row">${[2, 5, 10].map(m => `<button class="chip" data-min="${m}" aria-pressed="${f.minutes === m}">${m} 分钟</button>`).join("")}</div></div>
         <div class="card evidence" id="ifthen" ${f.stepText ? "" : "hidden"}><p class="eyebrow">如果-那么计划</p><p>如果计时开始，我就先<span id="ifthenStep">${esc(f.stepText)}</span>。做到时间就可以停，继续做算额外收获。</p></div>
-        <button class="btn" data-act="toTimer" ${f.stepText ? "" : "disabled"}>就做这一步</button>`;
+        <button class="btn" data-act="toTimer">就做这一步</button>`;
 
       case "micro": return `${flowbar()}
         <header class="stack"><h2>先让身体动一下</h2>
@@ -591,7 +594,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
         return `${flowbar()}
           <header class="stack"><p class="eyebrow">第 ${count} 次尝试</p><h2>你开始了，这就是重点</h2></header>
           <div class="stack"><p><strong>刚才那一步</strong></p>
-            <div class="row">
+            <div class="row" id="resultRow">
               <button class="chip" data-result="done" aria-pressed="${f.result === "done"}">做完了</button>
               <button class="chip" data-result="partial" aria-pressed="${f.result === "partial"}">做了一部分</button>
               <button class="chip" data-result="none" aria-pressed="${f.result === "none"}">没做下去</button>
@@ -604,7 +607,7 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
           ${f.result === "none" ? `<div class="card warm"><p>没做下去也是信息。下次把第一步再拆小一半试试。</p></div>` : ""}
           <label class="field">这次学到了什么？（可选，一句就够）
             <input type="text" id="note" value="${esc(f.note)}" placeholder="比如：开始前的害怕比实际做的时候大"></label>
-          <button class="btn" data-act="saveFlow" ${f.result && f.after ? "" : "disabled"}>保存</button>`;
+          <button class="btn" data-act="saveFlow">保存</button>`;
       }
     }
     return "";
@@ -620,29 +623,43 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
     document.getElementById("tabs").hidden = !!flow;
     document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", !flow && a.dataset.tab === tab ? "page" : "false"));
     $app.innerHTML = flow ? viewFlow() : tab === "review" ? viewReview() : tab === "values" ? viewValues() : viewHome();
-    if (flow && flow.step === "settle") runBreath();
+    if (flow && flow.step === "settle" && breath.flowId !== flow.id) runBreath();
   }
 
-  let breathRun = 0;
+  // the orb's phase lives here so taps that re-render the step don't restart it
+  const breath = { flowId: null, cls: "orb", text: "准备" };
   function runBreath() {
-    const run = ++breathRun;
-    const orb = document.getElementById("orb");
-    if (!orb) return;
+    const id = flow.id;
+    Object.assign(breath, { flowId: id, cls: "orb", text: "准备" });
+    const set = (cls, text) => {
+      if (!flow || flow.id !== id) return false;
+      Object.assign(breath, { cls, text });
+      const o = document.getElementById("orb");
+      if (o) { o.className = cls; o.textContent = text; }
+      return true;
+    };
     let cycle = 0;
     const step = () => {
-      const o = document.getElementById("orb");
-      if (run !== breathRun || !o) return;
-      if (cycle >= 3) { o.className = "orb"; o.textContent = "好了"; return; }
-      o.className = "orb in"; o.textContent = "吸气";
+      if (cycle >= 3) { set("orb", "好了"); return; }
+      if (!set("orb in", "吸气")) return;
       setTimeout(() => {
-        const o2 = document.getElementById("orb");
-        if (run !== breathRun || !o2) return;
-        o2.className = "orb out"; o2.textContent = "呼气";
+        if (!set("orb out", "呼气")) return;
         cycle++;
         setTimeout(step, 6000);
       }, 4000);
     };
     setTimeout(step, 600);
+  }
+
+  // say what is missing and bring it into view, instead of a button that does nothing
+  function need(selector, msg) {
+    toast(msg);
+    const el = document.querySelector(selector);
+    if (el) {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.classList.remove("need"); void el.offsetWidth; el.classList.add("need");
+      if (el.focus && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) el.focus({ preventScroll: true });
+    }
   }
 
   // ---------- timer ----------
@@ -707,17 +724,24 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
       case "direct": startFlow("direct"); break;
       case "exit": exitFlow(); break;
       case "next": go(d.to); break;
+      case "toRoute":
+        if (!flow.before) { need(".scale", "先给此刻打个分：点下面 1–10 里的一个数字"); return; }
+        go("route"); break;
       case "back": back(); break;
       case "toShrink":
-        if (!flow.task) { toast("先写下这件事，哪怕几个字"); return; }
+        if (!flow.task) { need("#task", "先写下这件事，哪怕几个字"); return; }
         if (!state.backlog.includes(flow.task)) { state.backlog.unshift(flow.task); state.backlog = state.backlog.slice(0, 20); saveConfig(); }
         go("shrink"); break;
-      case "toTimer": if (flow.stepText) go("timer"); break;
+      case "toTimer":
+        if (!flow.stepText) { need("#stepText", "先写下第一步，或者点一个例子"); return; }
+        go("timer"); break;
       case "startTimer": startTimer(); break;
       case "finish": stopTimer(); go("after"); break;
       case "saveOnly":
         await saveEntry(buildEntry(flow)); flow = null; location.hash = "#home"; render(); toast("已保存"); break;
       case "saveFlow": {
+        if (!flow.result) { need("#resultRow", "先选一下：做完了、做了一部分，还是没做下去"); return; }
+        if (!flow.after) { need(".scale", "再给现在打个分：点 1–10 里的一个数字"); return; }
         const f = flow;
         await saveEntry(buildEntry(f));
         // a finished task leaves the backlog
@@ -769,10 +793,9 @@ nav.tabs a[aria-current="page"] { color: var(--fg); font-weight: 700; border-top
     if (el.dataset.vname !== undefined) state.values[Number(el.dataset.vname)].name = el.value;
     else if (el.dataset.vmeaning !== undefined) state.values[Number(el.dataset.vmeaning)].meaning = el.value;
     else {
-      // keep the continue buttons in step with typed text
+      // keep the if-then preview in step with typed text
       if (flow && el.id === "stepText") {
         flow.stepText = el.value.trim();
-        const btn = document.querySelector('[data-act="toTimer"]'); if (btn) btn.disabled = !flow.stepText;
         document.getElementById("ifthen").hidden = !flow.stepText;
         document.getElementById("ifthenStep").textContent = flow.stepText;
       }
